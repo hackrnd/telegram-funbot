@@ -1,0 +1,8 @@
+node_modules/
+launchConfigurations/
+bin
+.jazzignore
+.project
+.settings/
+temp.png
+manifest.yml
