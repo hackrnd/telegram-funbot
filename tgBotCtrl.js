@@ -111,36 +111,48 @@ module.exports = {
 	
 	
 	sendTelegramPhoto: function (req, res, photoUrl){
+		self = this;
 		
 		//Download from photo service
 		return request(photoUrl).pipe(fs.createWriteStream('temp.png')).on('close', function(){
 		  console.log('photo downloaded');
-		  var chatId = req.body.message.chat.id;
-		    var formData = {
-				  	chat_id: chatId,
-				  	//create read stream to upload as multipart/form-data
-				  	photo: fs.createReadStream('temp.png')
-				  };
-		 
-			var options = {
-			  url: 'https://api.telegram.org/bot' + tgBot.token + '/sendPhoto',
-			  formData: formData
-			};
-			
-			//Upload to telegram
-			return request.post(options, function(err, response, body){
-				if(err)
-					return res.status(500).json({
-						test: err,
-						success: false,
-						error: 'Error on sendMessage to telegram'
-					});
+		  
+		  var stats = fs.statSync('temp.png');
+		  var fileSizeInBytes = stats["size"];
+		  
+		  //if the file downloaded is a valid image
+		  if(fileSizeInBytes > 500){
+			    var chatId = req.body.message.chat.id;
+			    var formData = {
+					  	chat_id: chatId,
+					  	//create read stream to upload as multipart/form-data
+					  	photo: fs.createReadStream('temp.png')
+					  };
+			 
+				var options = {
+				  url: 'https://api.telegram.org/bot' + tgBot.token + '/sendPhoto',
+				  formData: formData
+				};
+				
+				//Upload to telegram
+				return request.post(options, function(err, response, body){
+					console.log(response.statusCode);
+					console.log(body);
+					if(err)
+						return res.status(500).json({
+							test: err,
+							success: false,
+							error: 'Error on sendMessage to telegram'
+						});
 
-				return res.json({
-			      success: true,
-			      error: null
-			    });
-			}); 
+					return res.json({
+				      success: true,
+				      error: null
+				    });
+				}); 
+		  }else{
+			  return self.sendTelegramText(req, res, 'Photo API failed. Please try again later.');
+		  }		  	    
 		});    	  
 	}
 };
